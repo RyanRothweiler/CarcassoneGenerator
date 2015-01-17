@@ -15,9 +15,9 @@ REM 32-bit build
 REM cl %CommonCompilerFlags% ..\code\win32_carcassone.cpp /link -subsystem,5.1 %CommonLinkerFlags%
 
 REM 64-bit build
-del *.pdb > NUL 2> NUL
-echo WAITING FOR PDB > lock.tmp
-cl %CommonCompilerFlags% ..\code\carcassone.cpp -LD /link -incremental:no -opt:ref 
-del lock.tmp
+
+
+del *.pdb
+cl %CommonCompilerFlags% ..\code\carcassone.cpp -LD /link -incremental:no -opt:ref /PDB:handmade_%random%.pdb /EXPORT:GameUpdateAndRender
 cl %CommonCompilerFlags% ..\code\win32_carcassone.cpp /link %CommonLinkerFlags%
 popd

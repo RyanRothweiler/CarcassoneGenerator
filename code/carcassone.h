@@ -18,3 +18,8 @@ typedef int64_t int64;
 
 typedef float real32;
 typedef double real64;
+
+typedef int32 bool32;
+
+#define GAME_UPDATE_AND_RENDER(name) void name()
+typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
