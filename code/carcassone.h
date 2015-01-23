@@ -26,6 +26,16 @@ typedef double real64;
 
 typedef int32 bool32;
 
+inline uint32
+SafeTruncateUInt62(uint64 Value)
+{
+	Assert(Value <= 0xFFFFFFFF);
+	uint32 Result = (uint32)Value;
+	return (Result);
+}
+
+#include "vector2.h"
+
 struct game_screen_information
 {
 	void *PixelMemory;
@@ -53,13 +63,31 @@ struct game_input
 	bool32 LeftShoulder;
 	bool32 RightShoulder;
 
-	bool32 RightBumper;
-	bool32 LeftBumper;
+	bool32 RightTrigger;
+	bool32 LeftTrigger;
 
 	bool32 Start;
 	bool32 Select;
 
 	bool32 Home;
+
+	real32 dtForFrame;
+};
+
+struct read_file_result
+{
+	uint32 FileSize;
+	void *FileData;
+};
+
+#define PLATFORM_READ_FILE(name) read_file_result name(char *Filename)
+typedef PLATFORM_READ_FILE(platform_read_file);
+
+struct bitmap_image
+{
+	int32 Width;
+	int32 Height;
+	uint32 *Pixels;
 };
 
 struct game_memory
@@ -68,26 +96,55 @@ struct game_memory
 
 	uint64 PermanentStorageSize;
 	void *PermanentStorage;
+
+	platform_read_file *PlatformReadFile;
 };
 
-struct vector2
+struct tile
 {
-	uint32 X;
-	uint32 Y;
+/*
+	1 = Road
+	2 = Farm
+	3 = City
+	100 = Taken
+*/
+	int32 TopType;
+	int32 BottomType;
+	int32 RightType;
+	int32 LeftType;
+
+	vector2 TilePosition;
+
+	bitmap_image Sprite;
+	bool32 TileHasBeenSet;
+};
+
+struct tile_map
+{
+	int32 TileCountX = 255;
+	int32 TileCountY = 256;
+
+	int32 TileWidth;
+
+	tile Tiles [256][256];
 };
 
 struct game_state
 {
-	vector2 SquarePosition;
-	uint32 SquareSideLength;
+	vector2 CameraPosition;
+	vector2 LastCameraPosition;
+
+	bitmap_image RoadRoadImage;
+
+	tile_map WorldTileMap;
 };
 
 struct color
 {
-	uint32 R;
-	uint32 G;
-	uint32 B;
-	uint32 A;
+	real32 R;
+	real32 G;
+	real32 B;
+	real32 A;
 };
 
 #define GAME_UPDATE_AND_RENDER(name) void name(game_input GameInput, game_screen_information *GameScreenInformation, game_memory *GameMemory)
