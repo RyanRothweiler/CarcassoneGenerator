@@ -71,7 +71,7 @@ struct game_input
 
 	bool32 Home;
 
-	real32 dtForFrame;
+	bool32 Shift;
 };
 
 struct read_file_result
@@ -88,6 +88,8 @@ struct bitmap_image
 	int32 Width;
 	int32 Height;
 	uint32 *Pixels;
+
+	uint32 BytesPerPixel;
 };
 
 struct game_memory
@@ -103,20 +105,22 @@ struct game_memory
 struct tile
 {
 /*
-	1 = Road
-	2 = Farm
-	3 = City
-	100 = Taken
+	R = Road
+	F = Farm
+	C = City
 */
-	int32 TopType;
-	int32 BottomType;
-	int32 RightType;
-	int32 LeftType;
+	char TopType;
+	char RightType;
+	char BottomType;
+	char LeftType;
 
 	vector2 TilePosition;
-
 	bitmap_image Sprite;
 	bool32 TileHasBeenSet;
+
+	// This controls how many of this tile to add to the available list when this tile is possible.
+	// A higher number means this tile has a higher chance to be placed.
+	uint32 NumberAvailable; 
 };
 
 struct tile_map
@@ -129,6 +133,14 @@ struct tile_map
 	tile Tiles [256][256];
 };
 
+struct color
+{
+	real32 R;
+	real32 G;
+	real32 B;
+	real32 A;
+};
+
 struct game_state
 {
 	vector2 CameraPosition;
@@ -137,14 +149,12 @@ struct game_state
 	bitmap_image RoadRoadImage;
 
 	tile_map WorldTileMap;
-};
 
-struct color
-{
-	real32 R;
-	real32 G;
-	real32 B;
-	real32 A;
+	uint32 SizeOfDeck;
+	tile TileDeck[100];
+
+	bitmap_image PlayerSprite;
+	vector2 PlayerPosition;
 };
 
 #define GAME_UPDATE_AND_RENDER(name) void name(game_input GameInput, game_screen_information *GameScreenInformation, game_memory *GameMemory)

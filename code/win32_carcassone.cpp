@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <stdlib.h>
 
 #include "carcassone.h"
 #include "win32_carcassone.h"
@@ -14,6 +15,7 @@
 global_variable bool GlobalRunning;
 global_variable int64 GlobalPerfCountFrequency;
 global_variable win32_window_pixel_information WindowPixelInformation;
+global_variable game_input GameInput;
 
 
 internal win32_window_dimensions
@@ -54,13 +56,13 @@ ResizeDIBSection(HWND WindowHandle, win32_window_pixel_information *PixelInforma
 
 	uint8 *Row = (uint8 *)PixelInformation->PixelMemory;
 	for (uint32 Y = 0;
-	     Y < WindowDimensions.Height;
-	     ++Y)
+		Y < WindowDimensions.Height;
+		++Y)
 	{
 		uint8 *Pixel = (uint8 *)Row;
 		for (uint32 X = 0;
-		     X < WindowDimensions.Width;
-		     ++X)
+			X < WindowDimensions.Width;
+			++X)
 		{
 			*Pixel = 0;
 			++Pixel;
@@ -84,11 +86,11 @@ Win32DisplayPixelInformation(HWND WindowHandle, HDC DeviceContext, win32_window_
 {
 	win32_window_dimensions WindowDimensions = Win32GetWindowDimensions(WindowHandle);
 	StretchDIBits(DeviceContext,
-	              0, 0, WindowDimensions.Width, WindowDimensions.Height,
-	              0, 0, WindowDimensions.Width, WindowDimensions.Height,
-	              WindowPixelInformation->PixelMemory,
-	              &WindowPixelInformation->BitMapInfo,
-	              DIB_PAL_COLORS, SRCCOPY);
+		0, 0, WindowDimensions.Width, WindowDimensions.Height,
+		0, 0, WindowDimensions.Width, WindowDimensions.Height,
+		WindowPixelInformation->PixelMemory,
+		&WindowPixelInformation->BitMapInfo,
+		DIB_PAL_COLORS, SRCCOPY);
 }
 
 LRESULT CALLBACK
@@ -123,6 +125,59 @@ Win32WindowCallback(HWND WindowHandle, UINT msg, WPARAM wParam, LPARAM lParam)
 			Win32DisplayPixelInformation(WindowHandle, DeviceContext, &WindowPixelInformation);
 
 			EndPaint(WindowHandle, &PaintStruct);
+		}break;
+
+		case WM_KEYUP:
+		{
+			uint32 VKCode = (uint32)wParam;
+
+			if (VKCode == 'W')
+			{
+				GameInput.DPadUp = false;
+			}
+			if (VKCode == 'A')
+			{
+				GameInput.DPadLeft = false;
+			}
+			if (VKCode == 'S')
+			{
+				GameInput.DPadDown = false;
+			}
+			if (VKCode == 'D')
+			{
+				GameInput.DPadRight = false;
+			}
+			if (VKCode == 0x10)
+			{
+				GameInput.Shift = false;
+			}
+		}break;
+
+		case WM_KEYDOWN:
+		{
+			uint32 VKCode = (uint32)wParam;
+
+			if (VKCode == 'W')
+			{
+				GameInput.DPadUp = true;
+			}
+			if (VKCode == 'A')
+			{
+				GameInput.DPadLeft = true;
+			}
+			if (VKCode == 'S')
+			{
+				GameInput.DPadDown = true;
+			}
+			if (VKCode == 'D')
+			{
+				GameInput.DPadRight = true;
+			}
+
+			if (VKCode == 0x10)
+			{
+				GameInput.Shift = true;
+			}
 		}break;
 
 		default:
@@ -205,19 +260,19 @@ StringLength(char *String)
 
 void 
 CatStrings(size_t SourceACount, char *SourceA,
-           size_t SourceBCount, char *SourceB,
-           size_t DestCount, char *Dest)
+	size_t SourceBCount, char *SourceB,
+	size_t DestCount, char *Dest)
 {
 	for (int Index = 0;
-	     Index < SourceACount;
-	     ++Index)
+		Index < SourceACount;
+		++Index)
 	{
 		*Dest++ = *SourceA++;
 	}
 
 	for (int Index = 0;
-	     Index < SourceBCount;
-	     ++Index)
+		Index < SourceBCount;
+		++Index)
 	{
 		*Dest++ = *SourceB++;
 	}
@@ -232,8 +287,8 @@ Win32GetEXEFileName(win32_state *State)
 	DWORD SizeOfFileName = GetModuleFileNameA(0, State->EXEFileName, sizeof(State->EXEFileName));
 	State->OnePastLastEXEFileNameSlash = State->EXEFileName;
 	for (char *Scan = State->EXEFileName;
-	     *Scan;
-	     ++Scan)
+		*Scan;
+		++Scan)
 	{
 		if (*Scan == '\\')
 		{
@@ -244,11 +299,11 @@ Win32GetEXEFileName(win32_state *State)
 
 internal void 
 Win32BuildEXEPathFileName(win32_state *State, char *FileName,
-                          int DestCount, char *Dest)
+	int DestCount, char *Dest)
 {
 	CatStrings(State->OnePastLastEXEFileNameSlash - State->EXEFileName, State->EXEFileName, 
-	           StringLength(FileName), FileName, 
-	           DestCount, Dest);
+		StringLength(FileName), FileName, 
+		DestCount, Dest);
 }
 
 internal real32
@@ -284,7 +339,7 @@ PLATFORM_READ_FILE(PlatformReadFile)
 			{
 				DWORD BytesRead;
 				if (ReadFile(FileHandle, Result.FileData, FileSize32, &BytesRead, 0) && 
-				    (FileSize32 == BytesRead))
+					(FileSize32 == BytesRead))
 				{
 					Result.FileSize = FileSize32;
 				}
@@ -338,10 +393,10 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 
 	char SourceGameCodeDLLFullPath[WIN32_STATE_FILE_NAME_COUNT];
 	Win32BuildEXEPathFileName(&Win32State, "carcassone.dll",
-	                          sizeof(SourceGameCodeDLLFullPath), SourceGameCodeDLLFullPath);
+		sizeof(SourceGameCodeDLLFullPath), SourceGameCodeDLLFullPath);
 	char TempGameCodeDLLFullPath[WIN32_STATE_FILE_NAME_COUNT];
 	Win32BuildEXEPathFileName(&Win32State, "carcassone_temp.dll",
-	                          sizeof(TempGameCodeDLLFullPath), TempGameCodeDLLFullPath);
+		sizeof(TempGameCodeDLLFullPath), TempGameCodeDLLFullPath);
 
 	LARGE_INTEGER PerfCountFrequencyReult;
 	QueryPerformanceFrequency(&PerfCountFrequencyReult);
@@ -358,18 +413,18 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 	{
 		HWND WindowHandle = 
 		CreateWindowEx(
-		               0,
-		               WindowClass.lpszClassName,
-		               "Carcassone Generator",
-		               WS_OVERLAPPEDWINDOW|WS_VISIBLE,
-		               CW_USEDEFAULT,
-		               CW_USEDEFAULT,
-		               CW_USEDEFAULT,
-		               CW_USEDEFAULT,
-		               0,
-		               0,
-		               Instance,
-		               0);
+			0,
+			WindowClass.lpszClassName,
+			"Carcassone Generator",
+			WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			0,
+			0,
+			Instance,
+			0);
 		if (WindowHandle)
 		{
 			win32_window_pixel_information WindowPixelInformation = {};
@@ -382,17 +437,13 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 			win32_game_code Game = Win32LoadGameCode(SourceGameCodeDLLFullPath, TempGameCodeDLLFullPath);
 			uint32 LoadCounter = 0;
 
-
-			game_input GameInput = {};
-
-
 			game_memory GameMemory = {};
 			GameMemory.PermanentStorageSize = Gigabytes(1);
 			GameMemory.PlatformReadFile = PlatformReadFile;
 
 			LPVOID BaseAddress = (LPVOID)Terrabytes((uint64)2);
 			Win32State.GameMemoryBlock = VirtualAlloc(BaseAddress, (size_t)GameMemory.PermanentStorageSize,
-			                                          MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+				MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 			GameMemory.PermanentStorage = Win32State.GameMemoryBlock;
 
 			if (GameMemory.PermanentStorage)
@@ -406,6 +457,10 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 					while(PeekMessage(&Message, NULL, 0, 0, PM_REMOVE))
 					{
 						TranslateMessage(&Message);
+						if (Message.message == WM_SYSKEYDOWN)
+						{
+							Assert(0);
+						}
 						DispatchMessage(&Message);
 					}	
 
@@ -421,8 +476,8 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 
 					DWORD dwResult;    
 					for (DWORD ControllerIndex = 0; 
-					     ControllerIndex < XUSER_MAX_COUNT; 
-					     ControllerIndex++)
+						ControllerIndex < XUSER_MAX_COUNT; 
+						ControllerIndex++)
 					{
 						XINPUT_STATE ControllerState;
 						ZeroMemory(&ControllerState, sizeof(XINPUT_STATE));
@@ -480,10 +535,10 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 					FlipWallClock = Win32GetWallClock();
 
 
-					GameInput.DPadUp = false;
-					GameInput.DPadDown = false;
-					GameInput.DPadLeft = false;
-					GameInput.DPadRight = false;
+					// GameInput.DPadUp = false;
+					// GameInput.DPadDown = false;
+					// GameInput.DPadLeft = false;
+					// GameInput.DPadRight = false;
 					GameInput.ActionUp = false;
 					GameInput.ActionDown = false;
 					GameInput.ActionLeft = false;
@@ -506,7 +561,7 @@ WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int ShowC
 
 					char FPSBuffer[256];
 					_snprintf_s(FPSBuffer, sizeof(FPSBuffer),
-					            "%.02fms/f,  %.02ff/s,  %.02fmc/f\n", MSPerFrame, FPS, MCPF);
+						"%.02fms/f,  %.02ff/s,  %.02fmc/f\n", MSPerFrame, FPS, MCPF);
 					OutputDebugStringA(FPSBuffer);
 
 				}
